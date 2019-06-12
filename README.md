@@ -3,7 +3,7 @@ Platform: linux for now.
 
 Build:
 
-g++ decode.cpp
+g++ decode.cpp -o decode
 
 
 Run:
