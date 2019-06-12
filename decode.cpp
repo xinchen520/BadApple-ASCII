@@ -8,7 +8,6 @@
 #include <unistd.h>
 #include <time.h>
 #include <sys/ioctl.h>
-#define clear() printf("\033[H\033[J")
 using namespace std;
 const int default_width = 40;
 const int default_height = 20;
@@ -24,8 +23,8 @@ void GetTerminalSize(int* w, int* h)
     }
     else{
         ioctl(STDOUT_FILENO, TIOCGWINSZ, &size);
-        *w = size.ws_row;
-        *h = size.ws_col;
+        *w = size.ws_col;
+        *h = size.ws_row;
     }
 }
 void ReadNextImg(unsigned char* data)
@@ -33,10 +32,10 @@ void ReadNextImg(unsigned char* data)
     int len =0;
     len|= data[pointer++];
     len|= (int)(data[pointer++]) << 8;
-    //printf("len:%d\n", len);
+    //("len:%d\n", len);
     if(len&1)
     {
-        printf("error");
+        ("error");
         exit(-1);
     }
     for(int i =0;i<len/2;++i)
@@ -56,19 +55,18 @@ int main()
     FILE* file = fopen("result.txt","rb");
     fseek(file,0, SEEK_END);
     int file_size = ftell(file);
-    printf("size:%d\n", file_size);
     unsigned char* data = new unsigned char[file_size];
     fseek(file,0, SEEK_SET);
     fread(data,1, file_size, file);
     int width ;
     int height;
     GetTerminalSize(&width, &height);
-    width *=2;
+    width *=1;
     height-=1;
-    printf("%d %d\n",width, height);
+    printf("Your terminal size is %d x %d\n",width, height);
     printf("BadApple!!ASCII!!\nAuthor:Xin Chen\nPress 'Enter' to Start.");
     getchar();
-    clear();
+    char* screen_buffer = new char[width * height];
     for(int i = 0; i< 6570;++i)
     {
         
@@ -81,13 +79,14 @@ int main()
             {
                 float xf = (float)x / width;
                 int ix = std::max(xf * 90.0f -1.0f, 0.0f);
-                putchar(img[iy*90 + ix]);
+                screen_buffer[(y-1)*width + x-1] =img[iy*90 + ix]; 
             }
-            putchar('\n');
         }
+        write(STDOUT_FILENO, screen_buffer, width*height);
+
         nanosleep(&time_spec, NULL);
-        clear();
-//        system("cls");
+        write(STDOUT_FILENO, "\033c", sizeof("\033c"));
+
     }
     delete data;
     return 0;
